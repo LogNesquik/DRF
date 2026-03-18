@@ -3,9 +3,19 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Film, Director
 from .serializers import FilmListSerializers, FilmDetailSerializers, FilmValidateSerializers
+from rest_framework.viewsets import ModelViewSet
+
+class FilmViewSet(ModelViewSet):
+    queryset = Film.objects.prefetch_related("genres").select_related('director')
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return FilmListSerializers
+        return FilmDetailSerializers
 
 @api_view(['GET', 'POST'])
 def film_list_api_view(request):
+    print(request.user)
     if request.method == 'GET':
         films = Film.objects.select_related('director').prefetch_related('genres', 'reviews').all()
         data = FilmListSerializers(films, many=True).data
